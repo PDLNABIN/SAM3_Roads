@@ -1,4 +1,4 @@
-# 🛣️ Road Segmentation from Drone Imagery using SAM3 + LoRA
+#  Road Segmentation from Drone Imagery using SAM3 + LoRA
 
 Fine-tuning **SAM3** (`facebook/sam3`) with **LoRA (PEFT)** for binary road segmentation from drone/aerial imagery. Trained on manually labelled Kathmandu road tiles. Runs on Kaggle with dual T4 16 GB GPUs.
 
