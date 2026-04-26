@@ -129,13 +129,19 @@ Metric is standard IoU against human-buffered labels. Note that label boundaries
 ```
 sam3-peft.ipynb          # main training notebook
 README.md                # this file
-model/
-└── sam3_lora_best.pth   # saved checkpoint (best val IoU)
 ```
 
 Checkpoint contains: `model_state_dict`, `optimizer_state_dict`, `best_val_iou`, `history`, and training `config`.
 
 ---
+
+## Some Results
+<img width="761" height="650" alt="image" src="https://github.com/user-attachments/assets/d3885f55-5365-4bba-a63e-ca79981b234f" />
+<img width="769" height="675" alt="image" src="https://github.com/user-attachments/assets/a384adef-9b72-4604-b16c-d0d527f4a041" />
+<img width="727" height="648" alt="image" src="https://github.com/user-attachments/assets/2f7ca85d-8a08-4e52-abc2-964a45227cff" />
+
+
+
 
 ## Limitations
 
