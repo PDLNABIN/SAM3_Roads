@@ -1,0 +1,59 @@
+[dataset]
+data_dir = "E:/SAM3_Roads/datasets/nabinpoudelsir/road-kathmandu-manually"
+train_split = "train"
+val_split = "val"
+test_split = "test"
+image_dir_name = "images"
+mask_dir_name = "masks"
+
+[augmentation]
+image_size = 504
+random_brightness_contrast_p = 0.5
+clahe_p = 0.2
+random_rotate90_p = 0.75
+rotate_limit = 45
+rotate_p = 0.4
+shift_limit = 0.05
+scale_limit = 0.15
+shift_scale_rotate_p = 0.4
+blur_p = 0.3
+noise_p = 0.3
+downscale_p = 0.3
+grid_distortion_p = 0.2
+horizontal_flip_p = 0.5
+vertical_flip_p = 0.5
+
+[model]
+model_name = "facebook/sam3"
+lora_r = 32
+lora_alpha = 64
+lora_dropout = 0.05
+lora_target_modules = ["q_proj", "v_proj"]
+num_classes = 1
+attention_implementation = "eager"
+gradient_checkpointing = true
+
+[training]
+seed = 42
+batch_size = 1
+val_batch_size = 1
+test_batch_size = 1
+num_workers = 0
+epochs = 15
+accumulation_steps = 8
+backbone_lr = 0.0001
+head_lr = 0.0005
+weight_decay = 0.0001
+clip_grad_norm = 1.0
+bce_weight = 0.5
+iou_threshold = 0.5
+data_parallel = true
+amp = true
+
+[output]
+output_dir = "outputs/sam3_roads"
+checkpoint_name = "sam3_lora_best.pth"
+history_name = "history.csv"
+curves_name = "training_curves.png"
+prediction_preview_name = "prediction_preview.png"
+preview_samples = 4
