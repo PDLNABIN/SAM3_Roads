@@ -61,9 +61,7 @@ def save_prediction_preview(
             logits = resize_logits_to_target(logits, masks)
             pred_mask = (torch.sigmoid(logits) > threshold).float()
 
-            img_np = images[0].float().clamp(0, 1).cpu().permute(1, 2, 0).numpy()
-            p2, p98 = np.percentile(img_np, (2, 98))
-            img_np = np.clip((img_np - p2) / (p98 - p2 + 1e-6), 0, 1)
+            img_np = _display_rgb(images[0])
 
             gt_np = masks[0, 0].float().cpu().numpy()
             pred_np = pred_mask[0, 0].float().cpu().numpy()
@@ -107,7 +105,7 @@ def save_split_predictions(
     for item_index in range(batch_size):
         dataset_index = batch_index * batch_size + item_index
         stem = Path(dataset.image_filenames[dataset_index]).stem
-        rgb = _stretch(images[item_index].detach().cpu().float().clamp(0, 1).permute(1, 2, 0).numpy())
+        rgb = _display_rgb(images[item_index])
         truth = masks[item_index, 0].detach().cpu().numpy()
         prediction = predictions[item_index, 0].detach().cpu().numpy()
         rgb_path = output_dir / f"{stem}_image.png"
@@ -139,6 +137,13 @@ def save_split_predictions(
 def _stretch(image: np.ndarray) -> np.ndarray:
     low, high = np.percentile(image, (2, 98))
     return np.clip((image - low) / (high - low + 1e-6), 0, 1)
+
+
+def _display_rgb(image: torch.Tensor) -> np.ndarray:
+    """Convert SAM3-normalized RGB input to a contrast-stretched display image."""
+    rgb = image.detach().cpu().float().permute(1, 2, 0).numpy()
+    rgb = rgb * np.array((0.5, 0.5, 0.5)) + np.array((0.5, 0.5, 0.5))
+    return _stretch(np.clip(rgb, 0, 1))
 
 
 def _skeleton(mask: np.ndarray) -> np.ndarray:
@@ -175,7 +180,7 @@ def export_portfolio_assets(config: AppConfig, checkpoint_path: Path, output_dir
         predictions = (torch.sigmoid(resize_logits_to_target(model(pixel_values=images), masks)) > 0.5).float()
 
     for index in range(min(4, images.shape[0])):
-        rgb = _stretch(images[index].cpu().permute(1, 2, 0).numpy())
+        rgb = _display_rgb(images[index])
         truth = masks[index, 0].cpu().numpy()
         prediction = predictions[index, 0].cpu().numpy()
         skeleton = _skeleton(prediction)
@@ -206,7 +211,7 @@ def export_portfolio_assets(config: AppConfig, checkpoint_path: Path, output_dir
 
     fig, axes = plt.subplots(1, 3, figsize=(15, 5))
     for axis, index, title in zip(axes, range(3), ["Canopy shadows", "Unpaved roads", "Sharp turns"]):
-        rgb = _stretch(images[index].cpu().permute(1, 2, 0).numpy())
+        rgb = _display_rgb(images[index])
         axis.imshow(rgb)
         axis.imshow(predictions[index, 0].cpu(), cmap="cool", alpha=0.45)
         axis.set_title(title)
