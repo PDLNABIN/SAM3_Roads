@@ -1,44 +1,44 @@
 {
   "metrics": {
     "validation": {
-      "road_iou": 0.5131795796131433,
-      "f1_score": 0.6782798109717313,
-      "dice": 0.6782798109717313,
-      "precision": 0.6079335380413063,
-      "recall": 0.767036483241282,
-      "pixel_accuracy": 0.9261780434492785,
-      "boundary_iou": 0.20165183327536934,
-      "relaxed_precision": 0.6233128921810571,
-      "relaxed_recall": 0.7150422544677558,
+      "road_iou": 0.5229450329178902,
+      "f1_score": 0.6867549670075123,
+      "dice": 0.6867549670075123,
+      "precision": 0.6367170238110185,
+      "recall": 0.7453283969532597,
+      "pixel_accuracy": 0.9310105608395834,
+      "boundary_iou": 0.09630042770026517,
+      "relaxed_precision": 0.6135444763485925,
+      "relaxed_recall": 0.6546902027874467,
       "images": 191,
       "threshold": 0.5
     },
     "test": {
-      "road_iou": 0.5440353348411652,
-      "f1_score": 0.7046928558757758,
-      "dice": 0.7046928558757758,
-      "precision": 0.6550405447273114,
-      "recall": 0.7624898644782071,
-      "pixel_accuracy": 0.93256779975363,
-      "boundary_iou": 0.22685734940695834,
-      "relaxed_precision": 0.7021351207382973,
-      "relaxed_recall": 0.7829465318566018,
+      "road_iou": 0.5584511955428915,
+      "f1_score": 0.7166746025028434,
+      "dice": 0.7166746025028434,
+      "precision": 0.683205026520229,
+      "recall": 0.7535923896474601,
+      "pixel_accuracy": 0.9371320724487264,
+      "boundary_iou": 0.11647547239194764,
+      "relaxed_precision": 0.7012090681778408,
+      "relaxed_recall": 0.7409754858100603,
       "images": 225,
       "threshold": 0.5
     }
   },
   "parameters": {
-    "total_parameters": 459486721,
-    "trainable_parameters": 5447937,
-    "trainable_ratio_percent": 1.1856571149963657,
-    "parameter_reduction_percent": 98.81434288500364
+    "total_parameters": 461356417,
+    "trainable_parameters": 7317633,
+    "trainable_ratio_percent": 1.5861127601916503,
+    "parameter_reduction_percent": 98.41388723980835
   },
   "inference": {
-    "mean_latency_ms": 41.775071716308595,
-    "std_latency_ms": 0.4167704291665947,
-    "throughput_fps": 23.937720724716538,
-    "peak_gpu_memory_mb": 1905.6474609375,
-    "peak_gpu_memory_gb": 1.8609838485717773,
+    "mean_latency_ms": 258.5532491048177,
+    "std_latency_ms": 0.07998390537114237,
+    "throughput_fps": 3.867675240834429,
+    "peak_gpu_memory_mb": 2430.95166015625,
+    "peak_gpu_memory_gb": 2.373976230621338,
     "profile_iterations": 30
   }
 }
