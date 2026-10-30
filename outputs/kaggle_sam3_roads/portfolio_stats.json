@@ -1,0 +1,46 @@
+{
+  "metrics": {
+    "road_iou": 0.5509594481621822,
+    "f1_score": 0.710475633408784,
+    "dice": 0.710475633408784,
+    "precision": 0.6529608601119294,
+    "recall": 0.7791012334307676,
+    "pixel_accuracy": 0.9330024422539565,
+    "boundary_iou": 0.11742801008403474,
+    "relaxed_precision": 0.6768659597714577,
+    "relaxed_recall": 0.7628174691353548,
+    "images": 225,
+    "threshold": 0.5,
+    "split": "test",
+    "portfolio_stats": {
+      "parameters": {
+        "total_parameters": 462872289,
+        "trainable_parameters": 8833505,
+        "trainable_ratio_percent": 1.908410853258057,
+        "parameter_reduction_percent": 98.09158914674194
+      },
+      "inference": {
+        "mean_latency_ms": 249.42574818929037,
+        "std_latency_ms": 0.09383351593614252,
+        "throughput_fps": 4.009209182530327,
+        "peak_gpu_memory_mb": 2280.73779296875,
+        "peak_gpu_memory_gb": 2.227283000946045,
+        "profile_iterations": 30
+      }
+    }
+  },
+  "parameters": {
+    "total_parameters": 462872289,
+    "trainable_parameters": 8833505,
+    "trainable_ratio_percent": 1.908410853258057,
+    "parameter_reduction_percent": 98.09158914674194
+  },
+  "inference": {
+    "mean_latency_ms": 249.42574818929037,
+    "std_latency_ms": 0.09383351593614252,
+    "throughput_fps": 4.009209182530327,
+    "peak_gpu_memory_mb": 2280.73779296875,
+    "peak_gpu_memory_gb": 2.227283000946045,
+    "profile_iterations": 30
+  }
+}

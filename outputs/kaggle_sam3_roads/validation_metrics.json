@@ -1,0 +1,14 @@
+{
+  "road_iou": 0.5125780536359672,
+  "f1_score": 0.6777541858469005,
+  "dice": 0.6777541858469005,
+  "precision": 0.6004268432954372,
+  "recall": 0.777943404188943,
+  "pixel_accuracy": 0.9249387761061058,
+  "boundary_iou": 0.09453572133201711,
+  "relaxed_precision": 0.5958825277929631,
+  "relaxed_recall": 0.6815457480395958,
+  "images": 191,
+  "threshold": 0.5,
+  "split": "validation"
+}
