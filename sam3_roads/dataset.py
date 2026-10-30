@@ -65,7 +65,10 @@ class ImageSegmentationDataset(Dataset):
             image_rgb = transformed["image"]
             mask = transformed["mask"]
 
-        image_tensor = torch.from_numpy(image_rgb).permute(2, 0, 1).float() / 255.0
+        if image_rgb.dtype == np.uint8:
+            image_tensor = torch.from_numpy(image_rgb).permute(2, 0, 1).float() / 255.0
+        else:
+            image_tensor = torch.from_numpy(image_rgb).permute(2, 0, 1).float()
         mask_tensor = torch.from_numpy((mask > 0).astype(np.float32)).unsqueeze(0)
         return image_tensor, mask_tensor
 

@@ -1,0 +1,53 @@
+[dataset]
+data_dir = "data/kaggle"
+train_split = "train"
+val_split = "val"
+test_split = "test"
+image_dir_name = "images"
+mask_dir_name = "masks"
+
+[augmentation]
+image_size = 1024
+
+[model]
+model_name = "facebook/sam3"
+lora_r = 32
+lora_alpha = 64
+lora_dropout = 0.1
+lora_target_modules = ["q_proj", "k_proj", "v_proj", "out_proj"]
+num_classes = 1
+attention_implementation = "sdpa"
+gradient_checkpointing = true
+head_type = "upsampling"
+
+[training]
+seed = 42
+batch_size = 1
+val_batch_size = 1
+test_batch_size = 1
+num_workers = 0
+epochs = 50
+accumulation_steps = 8
+backbone_lr = 0.00003
+head_lr = 0.00015
+weight_decay = 0.01
+clip_grad_norm = 1.0
+bce_weight = 0.5
+iou_threshold = 0.5
+data_parallel = true
+amp = true
+warmup_epochs = 2.0
+min_lr_factor = 0.01
+early_stopping_patience = 5
+early_stopping_min_delta = 0.0
+
+[output]
+output_dir = "outputs/kaggle_sam3_roads"
+checkpoint_name = "sam3_lora_best.pth"
+history_name = "history.csv"
+curves_name = "training_curves.png"
+prediction_preview_name = "prediction_preview.png"
+metrics_name = "test_metrics.json"
+validation_predictions_dir = "validation_predictions"
+test_predictions_dir = "test_predictions"
+preview_samples = 10

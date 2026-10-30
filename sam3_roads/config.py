@@ -22,7 +22,7 @@ class DatasetConfig:
 
 @dataclass(slots=True)
 class AugmentationConfig:
-    image_size: int = 504
+    image_size: int = 1024
     random_brightness_contrast_p: float = 0.5
     clahe_p: float = 0.2
     random_rotate90_p: float = 0.75
@@ -49,6 +49,7 @@ class ModelConfig:
     num_classes: int = 1
     attention_implementation: str | None = "eager"
     gradient_checkpointing: bool = True
+    head_type: str = "upsampling"
 
 
 @dataclass(slots=True)
@@ -68,6 +69,11 @@ class TrainingConfig:
     iou_threshold: float = 0.5
     data_parallel: bool = True
     amp: bool = True
+    warmup_epochs: float = 1.0
+    min_lr_factor: float = 0.01
+    pos_weight: float | None = None
+    early_stopping_patience: int = 5
+    early_stopping_min_delta: float = 0.0
 
 
 @dataclass(slots=True)
@@ -77,6 +83,9 @@ class OutputConfig:
     history_name: str = "history.csv"
     curves_name: str = "training_curves.png"
     prediction_preview_name: str = "prediction_preview.png"
+    metrics_name: str = "test_metrics.json"
+    validation_predictions_dir: str = "validation_predictions"
+    test_predictions_dir: str = "test_predictions"
     preview_samples: int = 4
 
 

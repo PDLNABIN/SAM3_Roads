@@ -4,6 +4,10 @@ import albumentations as A
 
 from sam3_roads.config import AugmentationConfig
 
+# SAM3 expects images normalized with mean=0.5, std=0.5 (scaling [0, 1] -> [-1, 1])
+_SAM3_MEAN = (0.5, 0.5, 0.5)
+_SAM3_STD = (0.5, 0.5, 0.5)
+
 
 def build_train_transform(config: AugmentationConfig) -> A.Compose:
     return A.Compose(
@@ -31,6 +35,7 @@ def build_train_transform(config: AugmentationConfig) -> A.Compose:
             A.GridDistortion(p=config.grid_distortion_p),
             A.HorizontalFlip(p=config.horizontal_flip_p),
             A.VerticalFlip(p=config.vertical_flip_p),
+            A.Normalize(mean=_SAM3_MEAN, std=_SAM3_STD),
         ]
     )
 
@@ -39,5 +44,6 @@ def build_eval_transform(config: AugmentationConfig) -> A.Compose:
     return A.Compose(
         [
             A.Resize(height=config.image_size, width=config.image_size),
+            A.Normalize(mean=_SAM3_MEAN, std=_SAM3_STD),
         ]
     )

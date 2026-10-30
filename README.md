@@ -27,7 +27,7 @@ E:/SAM3_Roads/
 SAM3 is a prompted multimodal model. This pipeline repurposes its **vision encoder only** as a pretrained feature extractor. The DETR decoder and mask decoder are bypassed because they require text and bounding box prompts. A lightweight CNN head is trained on top of the LoRA-adapted features.
 
 ```text
-Drone Image (504x504)
+Drone Image (1024x1024)
       |
       v
 SAM3 Vision Encoder <- LoRA adapters on q_proj, v_proj
@@ -39,7 +39,7 @@ Reshape tokens -> spatial feature map
 CNN Mask Head: Conv(C->128) -> Conv(128->64) -> Conv(64->1)
       |
       v
-Bilinear upsample -> Binary road mask (504x504)
+Bilinear upsample -> Binary road mask (1024x1024)
 ```
 
 Only the LoRA adapter weights and mask head are trained. The rest of the SAM3 vision backbone stays frozen.
@@ -85,7 +85,7 @@ poetry run sam3-roads train --config configs\sam3_roads.example.toml
 The default notebook-equivalent hyperparameters are stored in the config:
 
 ```text
-image_size = 504
+image_size = 1024
 batch_size = 1
 accumulation_steps = 8
 epochs = 15
@@ -97,6 +97,10 @@ head_lr = 0.0005
 ```
 
 Training uses AMP, gradient accumulation, gradient clipping, AdamW, validation IoU tracking, and best-checkpoint saving.
+Training also supports early stopping based on validation IoU. Set
+`training.early_stopping_patience` to the number of consecutive non-improving
+epochs to allow, or `0` to disable it. `training.early_stopping_min_delta`
+controls the minimum IoU improvement required.
 
 ## Outputs
 
@@ -107,7 +111,23 @@ outputs/sam3_roads/
 |-- sam3_lora_best.pth
 |-- history.csv
 |-- training_curves.png
-`-- prediction_preview.png
+|-- prediction_preview.png
+|-- test_metrics.json
+|-- validation_metrics.json
+|-- training_metrics.json
+|-- validation_predictions/
+|   |-- <sample>_image.png
+|   |-- <sample>_ground_truth.png
+|   |-- <sample>_prediction.png
+|   |-- <sample>_triplet.png
+|   `-- predictions.json
+|-- test_predictions/
+|   |-- <sample>_image.png
+|   |-- <sample>_ground_truth.png
+|   |-- <sample>_prediction.png
+|   |-- <sample>_triplet.png
+|   `-- predictions.json
+`-- portfolio_stats.json
 ```
 
 When you run training locally, these README image links will show the generated artifacts:
@@ -124,9 +144,36 @@ Checkpoint contents:
 - `history`
 - training `config`
 
+## Evaluation and portfolio exports
+
+The Kaggle configuration uses the published Kathmandu road dataset with 575
+training, 191 validation, and 225 held-out test tiles:
+
+```bash
+poetry run sam3-roads evaluate \
+  --config configs/sam3_roads.kaggle.toml \
+  --checkpoint outputs/kaggle_sam3_roads/sam3_lora_best.pth
+poetry run sam3-roads export-portfolio-assets \
+  --config configs/sam3_roads.kaggle.toml \
+  --checkpoint outputs/kaggle_sam3_roads/sam3_lora_best.pth \
+  --output portfolio/assets
+```
+
+Evaluation reports cumulative Road IoU, F1/Dice, precision, recall, pixel
+accuracy, Boundary IoU with a three-pixel dilation radius, and relaxed
+precision/recall with a three-pixel buffer. The profiler also records total
+and trainable parameters, synchronized CUDA latency, throughput, and peak
+memory.
+
+Every training run also preserves epoch-level training loss and validation
+loss, IoU, F1/Dice, precision, recall, Boundary IoU, and relaxed metrics in
+`history.csv` and `training_metrics.json`. The validation and test prediction
+directories preserve the source RGB image, ground-truth mask, predicted mask,
+and a three-panel visual triplet for every sample, plus a JSON manifest.
+
 ## Key Design Decisions
 
-**`image_size = 504`**
+**`image_size = 1024`**
 
 SAM3 uses 2D RoPE positional embeddings baked at load time. The resize transform, `from_pretrained(image_size=...)`, and config image size must match.
 
@@ -174,7 +221,12 @@ The preview visualization applies a 2-98 percentile contrast stretch so drone im
 - Label boundaries are approximate human-drawn buffers, so visual inspection can be more informative than raw IoU.
 - SAM3's pretrained mask decoder is not used because this workflow is prompt-free.
 - The current project is binary road / no-road segmentation only.
-- At 504x504 resolution, batch size is memory-limited on 16 GB GPUs.
+- At 1024x1024 resolution, batch size is memory-limited. If a GPU runs out
+  of memory, reduce `training.batch_size` to `1` and increase
+  `training.accumulation_steps` to `8` to preserve the same effective batch
+  size.
+- In environments with a small `/dev/shm` (shared-memory) mount, use
+  `training.num_workers = 0` to avoid DataLoader worker allocation errors.
 
 ## References
 

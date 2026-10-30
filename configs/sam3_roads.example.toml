@@ -7,7 +7,7 @@ image_dir_name = "images"
 mask_dir_name = "masks"
 
 [augmentation]
-image_size = 504
+image_size = 1024
 random_brightness_contrast_p = 0.5
 clahe_p = 0.2
 random_rotate90_p = 0.75
@@ -49,6 +49,8 @@ bce_weight = 0.5
 iou_threshold = 0.5
 data_parallel = true
 amp = true
+early_stopping_patience = 5
+early_stopping_min_delta = 0.0
 
 [output]
 output_dir = "outputs/sam3_roads"
@@ -56,4 +58,7 @@ checkpoint_name = "sam3_lora_best.pth"
 history_name = "history.csv"
 curves_name = "training_curves.png"
 prediction_preview_name = "prediction_preview.png"
+metrics_name = "test_metrics.json"
+validation_predictions_dir = "validation_predictions"
+test_predictions_dir = "test_predictions"
 preview_samples = 4

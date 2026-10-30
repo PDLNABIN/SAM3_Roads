@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SAM 3 Road Network — Before / After</title>
+  <style>
+    :root { color-scheme: dark; --accent: #61f4e3; --panel: #111827; --muted: #9ca3af; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 24px; background: radial-gradient(circle at top, #263454, #070b15 70%); color: #f9fafb; font: 16px/1.6 system-ui, sans-serif; }
+    .card { width: min(100%, 980px); padding: clamp(20px, 4vw, 48px); border: 1px solid #334155; border-radius: 28px; background: rgb(15 23 42 / .88); box-shadow: 0 24px 80px rgb(0 0 0 / .35); }
+    .eyebrow { color: var(--accent); font-size: .75rem; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; }
+    h1 { margin: 8px 0; font-size: clamp(2rem, 5vw, 4rem); line-height: 1.05; }
+    .lede { max-width: 650px; color: var(--muted); }
+    .slider { position: relative; overflow: hidden; aspect-ratio: 16 / 9; margin-top: 28px; border-radius: 18px; background: #020617; }
+    .slider img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    .after { width: 50%; overflow: hidden; border-right: 2px solid var(--accent); }
+    .after img { width: max(100%, 980px); max-width: none; }
+    input { position: absolute; inset: 0; z-index: 4; width: 100%; height: 100%; opacity: 0; cursor: ew-resize; }
+    .handle { position: absolute; z-index: 3; top: 50%; left: 50%; width: 42px; height: 42px; display: grid; place-items: center; transform: translate(-50%, -50%); border: 2px solid var(--accent); border-radius: 50%; background: #0f172a; color: var(--accent); pointer-events: none; }
+    .labels { position: absolute; z-index: 2; inset: 16px; display: flex; justify-content: space-between; pointer-events: none; font-size: .75rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+    .labels span { padding: 5px 9px; border-radius: 6px; background: rgb(2 6 23 / .7); }
+    .stats { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 22px; }
+    .stat { min-width: 120px; padding: 12px 16px; border: 1px solid #334155; border-radius: 12px; background: var(--panel); }
+    .stat strong { display: block; color: var(--accent); font-size: 1.2rem; }
+    .stat small { color: var(--muted); }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <div class="eyebrow">SAM 3 + PEFT / LoRA</div>
+    <h1>Road networks from the air.</h1>
+    <p class="lede">Drag the handle to compare the drone RGB tile with the learned road-network overlay. Replace the image paths with exports from <code>export-portfolio-assets</code>.</p>
+    <div class="slider" id="slider">
+      <img src="assets/slider_1_rgb.png" alt="Drone RGB image">
+      <div class="after" id="after"><img src="assets/slider_1_overlay.png" alt="Predicted road overlay"></div>
+      <div class="labels"><span>Prediction overlay</span><span>Drone RGB</span></div>
+      <div class="handle" id="handle">↔</div>
+      <input id="range" type="range" min="0" max="100" value="50" aria-label="Compare prediction overlay">
+    </div>
+    <div class="stats">
+      <div class="stat"><strong data-stat="iou">—</strong><small>Road IoU</small></div>
+      <div class="stat"><strong data-stat="boundary">—</strong><small>Boundary IoU</small></div>
+      <div class="stat"><strong data-stat="latency">—</strong><small>Latency</small></div>
+      <div class="stat"><strong data-stat="memory">—</strong><small>Peak VRAM</small></div>
+    </div>
+  </main>
+  <script>
+    const range = document.querySelector('#range');
+    const after = document.querySelector('#after');
+    const handle = document.querySelector('#handle');
+    range.addEventListener('input', () => { after.style.width = `${range.value}%`; handle.style.left = `${range.value}%`; });
+    fetch('portfolio_stats.json').then(response => response.ok ? response.json() : null).then(stats => {
+      if (!stats) return;
+      const metric = stats.metrics || stats;
+      const inference = stats.inference || {};
+      document.querySelector('[data-stat="iou"]').textContent = metric.road_iou ? `${(metric.road_iou * 100).toFixed(1)}%` : '—';
+      document.querySelector('[data-stat="boundary"]').textContent = metric.boundary_iou ? `${(metric.boundary_iou * 100).toFixed(1)}%` : '—';
+      document.querySelector('[data-stat="latency"]').textContent = inference.mean_latency_ms ? `${inference.mean_latency_ms.toFixed(1)} ms` : '—';
+      document.querySelector('[data-stat="memory"]').textContent = inference.peak_gpu_memory_gb ? `${inference.peak_gpu_memory_gb.toFixed(2)} GB` : '—';
+    }).catch(() => {});
+  </script>
+</body>
+</html>
