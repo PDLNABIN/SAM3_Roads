@@ -32,6 +32,7 @@ lora_target_modules = ["q_proj", "v_proj"]
 num_classes = 1
 attention_implementation = "eager"
 gradient_checkpointing = true
+head_type = "multiscale"
 
 [training]
 seed = 42

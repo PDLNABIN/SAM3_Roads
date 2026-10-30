@@ -33,10 +33,10 @@ Drone Image (1024x1024)
 SAM3 Vision Encoder <- LoRA adapters on q_proj, v_proj
       | last_hidden_state
       v
-Reshape tokens -> spatial feature map
+SAM3 multi-scale FPN feature maps
       |
       v
-CNN Mask Head: Conv(C->128) -> Conv(128->64) -> Conv(64->1)
+Multi-scale fusion -> CNN mask decoder
       |
       v
 Bilinear upsample -> Binary road mask (1024x1024)
@@ -176,6 +176,13 @@ and a three-panel visual triplet for every sample, plus a JSON manifest.
 **`image_size = 1024`**
 
 SAM3 uses 2D RoPE positional embeddings baked at load time. The resize transform, `from_pretrained(image_size=...)`, and config image size must match.
+
+**Multi-scale FPN decoder**
+
+The segmentation head consumes SAM3's four FPN feature levels instead of only
+the final low-resolution token map. Each level is projected, aligned to the
+highest available spatial resolution, fused, and decoded to preserve thin road
+structures and improve boundary localization.
 
 **LoRA on vision encoder only**
 

@@ -56,6 +56,56 @@ class ProgressiveMaskHead(nn.Sequential):
         )
 
 
+class MultiScaleMaskHead(nn.Module):
+    """Fuse SAM3 FPN levels before decoding a dense mask."""
+
+    def __init__(self, fpn_dim: int, num_classes: int = 1, projection_dim: int = 64) -> None:
+        super().__init__()
+        self.projections = nn.ModuleList(
+            [
+                nn.Sequential(
+                    nn.Conv2d(fpn_dim, projection_dim, kernel_size=1),
+                    nn.GroupNorm(8, projection_dim),
+                    nn.GELU(),
+                )
+                for _ in range(4)
+            ]
+        )
+        fused_dim = projection_dim * 4
+        self.decoder = nn.Sequential(
+            nn.Conv2d(fused_dim, 256, kernel_size=3, padding=1),
+            nn.GroupNorm(16, 256),
+            nn.GELU(),
+            nn.Conv2d(256, 128, kernel_size=3, padding=1),
+            nn.GroupNorm(16, 128),
+            nn.GELU(),
+            nn.Conv2d(128, 64, kernel_size=3, padding=1),
+            nn.GroupNorm(8, 64),
+            nn.GELU(),
+            nn.Conv2d(64, num_classes, kernel_size=1),
+        )
+
+    def forward(self, features: tuple[torch.Tensor, ...]) -> torch.Tensor:
+        if len(features) != len(self.projections):
+            raise RuntimeError(f"Expected 4 SAM3 FPN levels, received {len(features)}.")
+        target_size = features[0].shape[-2:]
+        projected = [
+            projection(
+                feature
+                if feature.shape[-2:] == target_size
+                else torch.nn.functional.interpolate(
+                    feature, size=target_size, mode="bilinear", align_corners=False
+                )
+            )
+            for feature, projection in zip(features, self.projections)
+        ]
+        fused = torch.cat(projected, dim=1)
+        decoded = self.decoder(fused)
+        return torch.nn.functional.interpolate(
+            decoded, scale_factor=2, mode="bilinear", align_corners=False
+        )
+
+
 class UnpromptedSAMSegmenter(nn.Module):
     def __init__(
         self,
@@ -63,6 +113,7 @@ class UnpromptedSAMSegmenter(nn.Module):
         embed_dim: int,
         num_classes: int = 1,
         head_type: str = "upsampling",
+        fpn_dim: int = 256,
     ) -> None:
         super().__init__()
         self.backbone = backbone
@@ -72,8 +123,11 @@ class UnpromptedSAMSegmenter(nn.Module):
         if not isinstance(embed_dim, int) or embed_dim <= 0:
             raise RuntimeError("embed_dim must be a positive integer for SAM3 backbone outputs.")
 
+        self.head_type = head_type
         if head_type in {"legacy", "linear"}:
             self.mask_head: nn.Module = LegacyMaskHead(embed_dim=embed_dim, num_classes=num_classes)
+        elif head_type == "multiscale":
+            self.mask_head = MultiScaleMaskHead(fpn_dim=fpn_dim, num_classes=num_classes)
         else:
             self.mask_head = ProgressiveMaskHead(embed_dim=embed_dim, num_classes=num_classes)
 
@@ -94,9 +148,17 @@ class UnpromptedSAMSegmenter(nn.Module):
         else:
             backbone_outputs = self.backbone(pixel_values=pixel_values)
 
+        if self.head_type == "multiscale":
+            fpn_features = getattr(backbone_outputs, "fpn_hidden_states", None)
+            if not fpn_features:
+                raise RuntimeError("SAM3 vision output does not contain FPN hidden states.")
+            dtype = next(self.mask_head.parameters()).dtype
+            fpn_features = tuple(feature.to(dtype) for feature in fpn_features)
+            return self.mask_head(fpn_features)
+
         features = self._reshape_features(backbone_outputs.last_hidden_state)
-        features = features.to(self.mask_head[0].weight.dtype)
-        return self.mask_head(features)
+        dtype = next(self.mask_head.parameters()).dtype
+        return self.mask_head(features.to(dtype))
 
     def _reshape_features(self, features: torch.Tensor) -> torch.Tensor:
         if features.ndim == 4:
@@ -147,6 +209,7 @@ def build_model(config: ModelConfig, image_size: int, device: torch.device) -> U
         embed_dim=resolve_backbone_embed_dim(sam_model, vision_backbone),
         num_classes=config.num_classes,
         head_type=getattr(config, "head_type", "upsampling"),
+        fpn_dim=resolve_fpn_dim(sam_model),
     ).to(device)
 
     if hasattr(segmenter.backbone, "enable_input_require_grads"):
@@ -175,3 +238,11 @@ def resolve_backbone_embed_dim(sam_model: nn.Module, vision_backbone: nn.Module)
         if isinstance(value, int) and value > 0:
             return value
     return 1024
+
+
+def resolve_fpn_dim(sam_model: nn.Module) -> int:
+    vision_config = getattr(sam_model.config, "vision_config", None)
+    value = getattr(vision_config, "fpn_hidden_size", None)
+    if isinstance(value, int) and value > 0:
+        return value
+    return 256
